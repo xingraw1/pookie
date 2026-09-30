@@ -1,0 +1,16 @@
+{
+  "description": "Create personalized digital cards with customizable text and graphics for special occasions, enhancing user engagement and celebration.",
+  "robots": {
+    "index": false
+  },
+  "icons": {
+    "icon": "/assets/favicon.png"
+  },
+  "openGraph": {
+    "image": "/.figma/make/social-image.png"
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
