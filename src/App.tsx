@@ -544,6 +544,7 @@ interface Slot {
   videoId: string | null // what this slot currently has cued / playing / paused
   loadSeq: number
   sawPlaying: number
+  preloading: boolean // silently playing muted just long enough to fill the buffer, then paused
 }
 
 let activeSlot = 0
@@ -554,7 +555,7 @@ function createSlot(YT: any, index: number): Promise<Slot> {
     const host = document.createElement('div')
     host.id = `hidden-youtube-player-${index}`
     document.body.appendChild(host)
-    const slot: Slot = { player: null, index, videoId: null, loadSeq: 0, sawPlaying: -1 }
+    const slot: Slot = { player: null, index, videoId: null, loadSeq: 0, sawPlaying: -1, preloading: false }
     slot.player = new YT.Player(host, {
       height: '1',
       width: '1',
@@ -562,7 +563,15 @@ function createSlot(YT: any, index: number): Promise<Slot> {
       events: {
         onReady: () => resolve(slot),
         onStateChange: (e: any) => {
-          if (e.data === 1) slot.sawPlaying = slot.loadSeq
+          if (e.data === 1) {
+            slot.sawPlaying = slot.loadSeq
+            if (slot.preloading) {
+              // Buffer is filled and the stream is connected: park it at 0:00, ready to resume instantly.
+              slot.preloading = false
+              slot.player.pauseVideo()
+              slot.player.seekTo(0, true)
+            }
+          }
           if (
             (e.data === 0 || e.data === 2) &&
             slot.sawPlaying === slot.loadSeq &&
@@ -589,7 +598,10 @@ function targetSlot(slots: Slot[]): Slot {
   return nowPlayingId !== null ? slots[1 - activeSlot] : slots[activeSlot]
 }
 
-/** Pre-buffer a song so the eventual play click starts almost instantly. Never interrupts playback. */
+/** Pre-buffer a song so the eventual play click starts almost instantly. Never interrupts playback.
+ *  cueVideoById() only fetches metadata; the audio stream isn't opened until playback starts, which
+ *  is why cueing alone still felt slow. So we actually start it MUTED in the idle slot, pause it as soon
+ *  as it's playing (a few hundred ms, inaudible), and un-mute + resume when the user clicks. */
 async function prepareSong(rawId: string) {
   const id = extractYoutubeId(rawId)
   if (nowPlayingId === id) return
@@ -597,7 +609,10 @@ async function prepareSong(rawId: string) {
   if (nowPlayingId === id || slots.some((s) => s.videoId === id)) return
   const slot = targetSlot(slots)
   slot.videoId = id
-  slot.player.cueVideoById(id)
+  slot.loadSeq++
+  slot.preloading = true
+  slot.player.mute()
+  slot.player.loadVideoById(id)
 }
 
 async function toggleSongPlayback(rawId: string) {
@@ -612,6 +627,8 @@ async function toggleSongPlayback(rawId: string) {
     // Stop whatever is playing in the other slot when switching.
     if (nowPlayingId !== null && slot.index !== activeSlot) slots[activeSlot].player.pauseVideo()
     slot.loadSeq++
+    slot.preloading = false // if a preload is still in flight, let it just keep playing
+    slot.player.unMute()
     if (ready) {
       slot.player.playVideo()
     } else {
@@ -744,6 +761,7 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
     } catch { return false }
   })
   const [hovered, setHovered] = useState(false)
+  const hoverPrepTimer = useRef<number | undefined>(undefined)
 
   const unlockDate = getCardUnlockDate(index)
   const locked = !isCardUnlocked(index)
@@ -790,9 +808,16 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
           return next
         })
       }}
-      onMouseEnter={() => { setHovered(true); if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
+      onMouseEnter={() => {
+        setHovered(true)
+        // Small delay so sweeping the mouse across the grid doesn't preload every card it passes over.
+        if (!locked && card.youtubeId) {
+          window.clearTimeout(hoverPrepTimer.current)
+          hoverPrepTimer.current = window.setTimeout(() => prepareSong(card.youtubeId!), 120)
+        }
+      }}
       onTouchStart={() => { if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); window.clearTimeout(hoverPrepTimer.current) }}
     >
       <div
         data-spacer
