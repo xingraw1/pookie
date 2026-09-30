@@ -1087,7 +1087,7 @@ export default function App() {
         className="relative min-h-screen w-full overflow-x-hidden pt-[80px] pb-[32px] px-[32px] tablet:px-[40px] desktop:px-[48px] desktop:pb-[48px]"
         style={{
           backgroundImage:
-            'linear-gradient(155.997deg, #FFB7CA 0%, #FFE7A3 100%)',
+            'linear-gradient(155.997deg, #FFB7CA 0%, #faebc1 100%)',
         }}
       >
       <ShootingStars />
