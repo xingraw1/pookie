@@ -20,10 +20,6 @@ function isCardUnlocked(index: number): boolean {
   return today >= unlock
 }
 
-// function isCardUnlocked(index: number): boolean {
-//   return true // TEMP: remove after UI check
-// }
-
 function CardFrontSvg({ month, day, locked, unlockDate, uid, className }: {
   month: number; day: number; locked: boolean; unlockDate: string; uid: string; className?: string
 }) {
@@ -244,7 +240,7 @@ const cards: CardData[] = [
         I feel okay when I see you smile, smile
         <br />
         <br />
-        (not in lyrics :p) happy fake anniversary LOL (the third one of the month)
+        (not in lyrics :p) happy not fake anniversary LOL
       </>
     ),
   },
@@ -697,7 +693,10 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
   const [flipped, setFlipped] = useState(() => {
     try {
       const saved = localStorage.getItem('flippedCards')
-      return saved ? (JSON.parse(saved) as number[]).includes(index) : false
+      // A locked card can never have been legitimately flipped through the click
+      // handler (it returns early when locked), so ignore any stale "flipped" entry
+      // left over from when isCardUnlocked briefly always returned true.
+      return saved ? (JSON.parse(saved) as number[]).includes(index) && isCardUnlocked(index) : false
     } catch { return false }
   })
   const [everSeen, setEverSeen] = useState(() => {
@@ -889,7 +888,7 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           jia you fine shyt :)
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          i am genuinely cheese at this point help me
+          i am genuinely cheese at this point help. issok this is me getting my whimsy back hehe
         </p>
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
           -- last edited 9/29/26 at 10:43pm pacific time
@@ -1054,6 +1053,23 @@ export default function App() {
   // getSharedPlayer() is memoized and just reuses the same player.
   useEffect(() => {
     getSharedPlayer()
+  }, [])
+
+  // One-time cleanup: purge any "flipped"/"seen" localStorage entries for cards that
+  // are currently locked. These are leftovers from when isCardUnlocked briefly always
+  // returned true (a temp debug stub), which let locked cards get flipped and saved.
+  useEffect(() => {
+    try {
+      const sanitize = (key: string) => {
+        const raw = localStorage.getItem(key)
+        if (!raw) return
+        const arr: number[] = JSON.parse(raw)
+        const cleaned = arr.filter((i) => isCardUnlocked(i))
+        if (cleaned.length !== arr.length) localStorage.setItem(key, JSON.stringify(cleaned))
+      }
+      sanitize('flippedCards')
+      sanitize('seenCards')
+    } catch {}
   }, [])
 
   // Welcome modal: shown automatically on the very first visit, reopenable anytime by clicking the header image
