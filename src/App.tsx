@@ -883,13 +883,13 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           i know you aren't a lyrics guy, but i am (well, girl). i like songs that tell a story, that convey emotions in poetic ways. a lot of songs have described feelings i could never put into words, and have said things i can't quite say myself.
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          today i don't have a lot of words. lately it's been hard, but i wanted to give this to you so you know i care, and hopefully it makes your day better for when i'm not physically there, or for when things seem uncertain.
+          some days i'm not in the best mood, so i wanted to give this to you so you know i care, and hopefully it makes your day better for when i'm not physically there, or for when things seem uncertain.
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           jia you fine shyt :)
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
-          -- last edited 9/26/26 at 11:54am pacific time
+          -- last edited 9/29/26 at 10:31pm pacific time
         </p>
 
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
