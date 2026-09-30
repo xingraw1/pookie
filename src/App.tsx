@@ -966,25 +966,25 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
             .welcome-scroll { scrollbar-width: thin; scrollbar-color: #ffb7ca #ffdde3; }
           }
         `}</style>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           to my pookie, my cutie patootie, my sunshine, the tuffest guy ever,
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           honestly, does she really like you if she doesn't vibe code a website for you?
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           i can't believe we're six months old!!
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           i know you aren't a lyrics guy, but i am (well, girl). a lot of songs have described feelings i could never put into words, and have said things i can't quite say myself.
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           some days i'm not in the best mood, so i wanted to give you this so you know i care, and hopefully it makes your day better for when i'm not physically there, or for when things seem uncertain.
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           jia you fine shyt :)
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           i am genuinely cheese at this point help. issok this is me getting my whimsy back :D
         </p>
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
