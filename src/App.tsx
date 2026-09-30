@@ -574,6 +574,20 @@ function getSharedPlayer(): Promise<any> {
   return ytPlayerPromise
 }
 
+// The video currently cued (loaded + buffered but not started) in the shared player.
+let cuedId: string | null = null
+
+/** Pre-buffer a song so the eventual play click starts almost instantly.
+ *  Skipped while something is playing so we never interrupt the current song. */
+async function prepareSong(rawId: string) {
+  const id = extractYoutubeId(rawId)
+  if (nowPlayingId !== null || cuedId === id) return
+  const player = await getSharedPlayer()
+  if (nowPlayingId !== null) return // something started while we were waiting for the player
+  cuedId = id
+  player.cueVideoById(id)
+}
+
 async function toggleSongPlayback(rawId: string) {
   const id = extractYoutubeId(rawId)
   const player = await getSharedPlayer()
@@ -582,8 +596,12 @@ async function toggleSongPlayback(rawId: string) {
     nowPlayingId = null
   } else {
     loadSeq++ // a new load is starting; ignore any stray paused/ended event still in flight for the previous one
-    player.loadVideoById(id)
-    player.playVideo()
+    if (cuedId === id) {
+      player.playVideo() // already buffered by prepareSong -> near-instant start
+    } else {
+      player.loadVideoById(id) // autoplays on its own, no extra playVideo() needed
+    }
+    cuedId = null
     nowPlayingId = id
   }
   notifyPlayerListeners()
@@ -610,6 +628,9 @@ function SongPlayButton({ youtubeId, title, artist }: { youtubeId?: string; titl
       type="button"
       data-play-button
       disabled={!hasSong}
+      onPointerEnter={() => { if (hasSong) prepareSong(cleanId) }}
+      onFocus={() => { if (hasSong) prepareSong(cleanId) }}
+      onPointerDown={() => { if (hasSong) prepareSong(cleanId) }}
       onClick={(e) => {
         e.stopPropagation()
         if (hasSong) toggleSongPlayback(cleanId)
@@ -748,6 +769,7 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
             }
           } catch {}
           if (!next) setHovered(false)
+          if (next && card.youtubeId) prepareSong(card.youtubeId)
           return next
         })
       }}
@@ -1052,6 +1074,12 @@ export default function App() {
   // anything happens (often several seconds); every play after that is fast because
   // getSharedPlayer() is memoized and just reuses the same player.
   useEffect(() => {
+    for (const href of ['https://www.youtube.com', 'https://i.ytimg.com', 'https://s.ytimg.com']) {
+      const link = document.createElement('link')
+      link.rel = 'preconnect'
+      link.href = href
+      document.head.appendChild(link)
+    }
     getSharedPlayer()
   }, [])
 
