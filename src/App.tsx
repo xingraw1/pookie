@@ -888,9 +888,12 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           jia you fine shyt :)
         </p>
-        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
-          -- last edited 9/29/26 at 10:43pm pacific time
+        <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+          i am genuinely cheese at this point help me
         </p>
+        {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
+          -- last edited 9/29/26 at 10:43pm pacific time
+        </p> */}
 
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
           to my pookie, my cutie patootie, my sunshine, the tuffest guy ever,
