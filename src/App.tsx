@@ -528,7 +528,7 @@ function notifyPlayerListeners() {
   playerListeners.forEach((cb) => cb())
 }
 
-// Two hidden players ("slots") so the NEXT song can be buffered while the current one plays.
+// A small pool of hidden players ("slots") so upcoming songs can be buffered while the current one plays.
 // With a single player, every switch had to fetch + buffer from scratch after the click,
 // which is where the delay came from. Now hovering/flipping a card cues its song in the idle
 // slot, and clicking play just un-pauses an already-buffered video.
@@ -545,8 +545,11 @@ interface Slot {
   loadSeq: number
   sawPlaying: number
   preloading: boolean // silently playing muted just long enough to fill the buffer, then paused
+  lastUsed: number // for picking which preloaded song to evict (least recently used)
 }
 
+// More than two slots = more songs held ready at once (each one is a hidden, paused, pre-buffered player).
+const NUM_SLOTS = 4
 let activeSlot = 0
 let slotsPromise: Promise<Slot[]> | null = null
 
@@ -555,7 +558,7 @@ function createSlot(YT: any, index: number): Promise<Slot> {
     const host = document.createElement('div')
     host.id = `hidden-youtube-player-${index}`
     document.body.appendChild(host)
-    const slot: Slot = { player: null, index, videoId: null, loadSeq: 0, sawPlaying: -1, preloading: false }
+    const slot: Slot = { player: null, index, videoId: null, loadSeq: 0, sawPlaying: -1, preloading: false, lastUsed: 0 }
     slot.player = new YT.Player(host, {
       height: '1',
       width: '1',
@@ -589,13 +592,18 @@ function createSlot(YT: any, index: number): Promise<Slot> {
 
 function getSlots(): Promise<Slot[]> {
   if (slotsPromise) return slotsPromise
-  slotsPromise = loadYoutubeApi().then((YT) => Promise.all([createSlot(YT, 0), createSlot(YT, 1)]))
+  slotsPromise = loadYoutubeApi().then((YT) => Promise.all(Array.from({ length: NUM_SLOTS }, (_, i) => createSlot(YT, i))))
   return slotsPromise
 }
 
-/** Which slot a new song should be loaded into: the idle one if something is playing. */
+/** Which slot a new song should be loaded into: an empty one, else the least recently used.
+ *  Never the slot that's currently playing. */
 function targetSlot(slots: Slot[]): Slot {
-  return nowPlayingId !== null ? slots[1 - activeSlot] : slots[activeSlot]
+  const candidates = slots.filter((s) => !(nowPlayingId !== null && s.index === activeSlot))
+  return (
+    candidates.find((s) => s.videoId === null) ??
+    candidates.reduce((oldest, s) => (s.lastUsed < oldest.lastUsed ? s : oldest))
+  )
 }
 
 /** Pre-buffer a song so the eventual play click starts almost instantly. Never interrupts playback.
@@ -606,8 +614,11 @@ async function prepareSong(rawId: string) {
   const id = extractYoutubeId(rawId)
   if (nowPlayingId === id) return
   const slots = await getSlots()
-  if (nowPlayingId === id || slots.some((s) => s.videoId === id)) return
+  if (nowPlayingId === id) return
+  const existing = slots.find((s) => s.videoId === id)
+  if (existing) { existing.lastUsed = performance.now(); return } // already ready; keep it from being evicted
   const slot = targetSlot(slots)
+  slot.lastUsed = performance.now()
   slot.videoId = id
   slot.loadSeq++
   slot.preloading = true
@@ -626,6 +637,7 @@ async function toggleSongPlayback(rawId: string) {
     const slot = ready ?? targetSlot(slots)
     // Stop whatever is playing in the other slot when switching.
     if (nowPlayingId !== null && slot.index !== activeSlot) slots[activeSlot].player.pauseVideo()
+    slot.lastUsed = performance.now()
     slot.loadSeq++
     slot.preloading = false // if a preload is still in flight, let it just keep playing
     slot.player.unMute()
@@ -816,6 +828,7 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
           hoverPrepTimer.current = window.setTimeout(() => prepareSong(card.youtubeId!), 120)
         }
       }}
+      onPointerDown={() => { if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
       onTouchStart={() => { if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
       onMouseLeave={() => { setHovered(false); window.clearTimeout(hoverPrepTimer.current) }}
     >
@@ -947,13 +960,13 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           i know you aren't a lyrics guy, but i am (well, girl). a lot of songs have described feelings i could never put into words, and have said things i can't quite say myself.
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          some days i'm not in the best mood, so i wanted to give this to you so you know i care, and hopefully it makes your day better for when i'm not physically there, or for when things seem uncertain.
+          some days i'm not in the best mood, so i wanted to give you this so you know i care, and hopefully it makes your day better for when i'm not physically there, or for when things seem uncertain.
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           jia you fine shyt :)
         </p>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          i am genuinely cheese at this point help. issok this is me getting my whimsy back hehe
+          i am genuinely cheese at this point help. issok this is me getting my whimsy back :D
         </p>
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
           -- last edited 9/29/26 at 10:43pm pacific time
@@ -1124,6 +1137,10 @@ export default function App() {
       document.head.appendChild(link)
     }
     getSlots()
+    // Pre-buffer the two newest unlocked songs (today's card is the one most likely to be tapped first).
+    // Newest goes last so it's the most recently used and safest from eviction.
+    const unlocked = cards.map((c, i) => ({ c, i })).filter(({ c, i }) => c.youtubeId && isCardUnlocked(i))
+    unlocked.slice(-2).forEach(({ c }) => prepareSong(c.youtubeId!))
   }, [])
 
   // One-time cleanup: purge any "flipped"/"seen" localStorage entries for cards that
