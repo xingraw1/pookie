@@ -528,80 +528,97 @@ function notifyPlayerListeners() {
   playerListeners.forEach((cb) => cb())
 }
 
-// loadSeq / sawPlayingForSeq guard against a known YouTube IFrame API quirk: calling
-// loadVideoById() on a player that's already playing another video can fire a stray
-// paused/ended event for the OLD video (state 2 or 0) just after the new one is
-// requested, before the new video's own "playing" event ever arrives. Without this
-// guard that stray event clears nowPlayingId right after we set it for the new song,
-// so the second button flips back to "play" on its own and can't be paused (clicking
-// it just restarts the same video, which can trigger the same stray event again).
-// Fix: only honor a paused/ended event once we've actually seen the current load
-// reach the "playing" state at least once.
-let loadSeq = 0
-let sawPlayingForSeq = -1
-
-let ytPlayerPromise: Promise<any> | null = null
-function getSharedPlayer(): Promise<any> {
-  if (ytPlayerPromise) return ytPlayerPromise
-  ytPlayerPromise = loadYoutubeApi().then(
-    (YT) =>
-      new Promise((resolve) => {
-        const host = document.createElement('div')
-        host.id = 'hidden-youtube-player'
-        document.body.appendChild(host)
-        const player = new YT.Player(host, {
-          height: '1',
-          width: '1',
-          playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1 },
-          events: {
-            onReady: () => resolve(player),
-            onStateChange: (e: any) => {
-              if (e.data === 1) {
-                // 1 = playing -> this load has genuinely started, future 0/2 events for it are real
-                sawPlayingForSeq = loadSeq
-              }
-              // 0 = ended, 2 = paused -> clear "now playing" so the button flips back,
-              // but only once the current load has been confirmed playing (see note above).
-              if ((e.data === 0 || e.data === 2) && sawPlayingForSeq === loadSeq) {
-                nowPlayingId = null
-                notifyPlayerListeners()
-              }
-            },
-          },
-        })
-      }),
-  )
-  return ytPlayerPromise
+// Two hidden players ("slots") so the NEXT song can be buffered while the current one plays.
+// With a single player, every switch had to fetch + buffer from scratch after the click,
+// which is where the delay came from. Now hovering/flipping a card cues its song in the idle
+// slot, and clicking play just un-pauses an already-buffered video.
+//
+// Per-slot loadSeq / sawPlaying guard against a YouTube IFrame API quirk: loadVideoById() on a
+// player that's already playing can fire a stray paused/ended event for the OLD video before the
+// new one's "playing" event. We only honor a paused/ended event once the current load has been
+// seen playing. We also ignore events from a slot that isn't the one nowPlayingId points at
+// (e.g. the slot we just paused programmatically when switching songs).
+interface Slot {
+  player: any
+  index: number
+  videoId: string | null // what this slot currently has cued / playing / paused
+  loadSeq: number
+  sawPlaying: number
 }
 
-// The video currently cued (loaded + buffered but not started) in the shared player.
-let cuedId: string | null = null
+let activeSlot = 0
+let slotsPromise: Promise<Slot[]> | null = null
 
-/** Pre-buffer a song so the eventual play click starts almost instantly.
- *  Skipped while something is playing so we never interrupt the current song. */
+function createSlot(YT: any, index: number): Promise<Slot> {
+  return new Promise((resolve) => {
+    const host = document.createElement('div')
+    host.id = `hidden-youtube-player-${index}`
+    document.body.appendChild(host)
+    const slot: Slot = { player: null, index, videoId: null, loadSeq: 0, sawPlaying: -1 }
+    slot.player = new YT.Player(host, {
+      height: '1',
+      width: '1',
+      playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1 },
+      events: {
+        onReady: () => resolve(slot),
+        onStateChange: (e: any) => {
+          if (e.data === 1) slot.sawPlaying = slot.loadSeq
+          if (
+            (e.data === 0 || e.data === 2) &&
+            slot.sawPlaying === slot.loadSeq &&
+            nowPlayingId !== null &&
+            nowPlayingId === slot.videoId
+          ) {
+            nowPlayingId = null
+            notifyPlayerListeners()
+          }
+        },
+      },
+    })
+  })
+}
+
+function getSlots(): Promise<Slot[]> {
+  if (slotsPromise) return slotsPromise
+  slotsPromise = loadYoutubeApi().then((YT) => Promise.all([createSlot(YT, 0), createSlot(YT, 1)]))
+  return slotsPromise
+}
+
+/** Which slot a new song should be loaded into: the idle one if something is playing. */
+function targetSlot(slots: Slot[]): Slot {
+  return nowPlayingId !== null ? slots[1 - activeSlot] : slots[activeSlot]
+}
+
+/** Pre-buffer a song so the eventual play click starts almost instantly. Never interrupts playback. */
 async function prepareSong(rawId: string) {
   const id = extractYoutubeId(rawId)
-  if (nowPlayingId !== null || cuedId === id) return
-  const player = await getSharedPlayer()
-  if (nowPlayingId !== null) return // something started while we were waiting for the player
-  cuedId = id
-  player.cueVideoById(id)
+  if (nowPlayingId === id) return
+  const slots = await getSlots()
+  if (nowPlayingId === id || slots.some((s) => s.videoId === id)) return
+  const slot = targetSlot(slots)
+  slot.videoId = id
+  slot.player.cueVideoById(id)
 }
 
 async function toggleSongPlayback(rawId: string) {
   const id = extractYoutubeId(rawId)
-  const player = await getSharedPlayer()
+  const slots = await getSlots()
   if (nowPlayingId === id) {
-    player.pauseVideo()
+    slots[activeSlot].player.pauseVideo()
     nowPlayingId = null
   } else {
-    loadSeq++ // a new load is starting; ignore any stray paused/ended event still in flight for the previous one
-    if (cuedId === id) {
-      player.playVideo() // already buffered by prepareSong -> near-instant start
+    const ready = slots.find((s) => s.videoId === id) // already cued (or paused) -> instant
+    const slot = ready ?? targetSlot(slots)
+    // Stop whatever is playing in the other slot when switching.
+    if (nowPlayingId !== null && slot.index !== activeSlot) slots[activeSlot].player.pauseVideo()
+    slot.loadSeq++
+    if (ready) {
+      slot.player.playVideo()
     } else {
-      player.loadVideoById(id) // autoplays on its own, no extra playVideo() needed
+      slot.videoId = id
+      slot.player.loadVideoById(id) // autoplays
     }
-    cuedId = null
+    activeSlot = slot.index
     nowPlayingId = id
   }
   notifyPlayerListeners()
@@ -773,7 +790,8 @@ function FlipCard({ card, fixedHeight, index }: { card: CardData; fixedHeight?: 
           return next
         })
       }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => { setHovered(true); if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
+      onTouchStart={() => { if (!locked && card.youtubeId) prepareSong(card.youtubeId) }}
       onMouseLeave={() => setHovered(false)}
     >
       <div
@@ -1072,7 +1090,7 @@ export default function App() {
   // for the first play click. Without this, the very first song someone plays has to
   // wait for the YouTube API script to download AND the player to initialize before
   // anything happens (often several seconds); every play after that is fast because
-  // getSharedPlayer() is memoized and just reuses the same player.
+  // getSlots() is memoized and just reuses the same players.
   useEffect(() => {
     for (const href of ['https://www.youtube.com', 'https://i.ytimg.com', 'https://s.ytimg.com']) {
       const link = document.createElement('link')
@@ -1080,7 +1098,7 @@ export default function App() {
       link.href = href
       document.head.appendChild(link)
     }
-    getSharedPlayer()
+    getSlots()
   }, [])
 
   // One-time cleanup: purge any "flipped"/"seen" localStorage entries for cards that
