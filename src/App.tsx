@@ -938,7 +938,7 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[720px] max-h-[85vh] overflow-y-auto flex flex-col gap-[18px] px-[28px] py-[32px] tablet:px-[44px] tablet:py-[40px]"
+        className="welcome-scroll relative w-full max-w-[720px] max-h-[85vh] overflow-y-auto flex flex-col gap-[18px] px-[28px] py-[32px] tablet:px-[44px] tablet:py-[40px]"
         style={{
           backgroundColor: 'white',
           borderRadius: 20,
@@ -947,6 +947,25 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Pink scrollbar: only appears when the content is taller than the modal (overflow-y-auto). */}
+        <style>{`
+          .welcome-scroll::-webkit-scrollbar { width: 12px; }
+          .welcome-scroll::-webkit-scrollbar-track {
+            background: #e6e6e6;
+            border-radius: 999px;
+            margin: 18px 0; /* keeps the track clear of the modal's rounded corners */
+          }
+          .welcome-scroll::-webkit-scrollbar-thumb {
+            background: #ffdde3;
+            border-radius: 999px;
+            border: 2px solid #ffdde3;
+          }
+          .welcome-scroll::-webkit-scrollbar-thumb:hover { background: #ffdde3; }
+          /* Firefox (and any browser without ::-webkit-scrollbar) */
+          @supports not selector(::-webkit-scrollbar) {
+            .welcome-scroll { scrollbar-width: thin; scrollbar-color: #ffb7ca #ffdde3; }
+          }
+        `}</style>
         <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           to my pookie, my cutie patootie, my sunshine, the tuffest guy ever,
         </p>
