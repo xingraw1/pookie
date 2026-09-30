@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+
+@theme {
+  --breakpoint-sm: 450px;
+  --breakpoint-tablet: 800px;
+  --breakpoint-lg: 1100px;
+  --breakpoint-desktop: 1300px;
+}
+
+@keyframes shoot {
+  0%    { opacity: 0; transform: translate(0, 0); }
+  4%    { opacity: 1; }
+  34%   { opacity: 0.9; }
+  40%   { opacity: 0; transform: translate(1100px, 635px); }
+  40.1% { transform: translate(0, 0); }
+  100%  { opacity: 0; transform: translate(0, 0); }
+}
+
+@keyframes shoot-mobile {
+  0%    { opacity: 0; transform: translate(0, 0); }
+  4%    { opacity: 1; }
+  34%   { opacity: 0.9; }
+  40%   { opacity: 0; transform: translate(100vw, 58vw); }
+  40.1% { transform: translate(0, 0); }
+  100%  { opacity: 0; transform: translate(0, 0); }
+}
+
+@media (max-width: 449px) {
+  .shooting-star {
+    animation-name: shoot-mobile !important;
+    left: -2% !important;
+  }
+}
+
+@font-face {
+  font-family: 'Angela';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/assets/angela1.ttf') format('truetype');
+}
