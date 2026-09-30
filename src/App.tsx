@@ -240,7 +240,7 @@ const cards: CardData[] = [
         I feel okay when I see you smile, smile
         <br />
         <br />
-        -- happy not fake anniversary LOL
+        (not in lyrics :p) happy not fake anniversary LOL
       </>
     ),
   },
@@ -273,7 +273,7 @@ const cards: CardData[] = [
         Then we gon' sleep 'til noon
         <br />
         <br />
-        -- *pad see ew
+        (not in lyrics :p) *pad see ew
       </>
     ),
   },
@@ -302,7 +302,7 @@ const cards: CardData[] = [
         Stay the way you are
         <br />
         <br />
-        -- HAPPY BOYFRIEND DAY MY CUTIE PATOOTIE &lt;333 
+        (not in lyrics :p) HAPPY BOYFRIEND DAY MY CUTIE PATOOTIE &lt;333 
       </>
     ),
   },
@@ -377,7 +377,7 @@ const cards: CardData[] = [
     title: 'The Way',
     artist: 'Ariana Grande',
     youtubeId: '2O3AOhEufyo',
-    lyrics: <>Be your lover, your friend, you'll find it all in me<br /><br />-- damn boy are u today's date cuz ur a 10/10</>,
+    lyrics: <>Be your lover, your friend, you'll find it all in me<br /><br />(not in lyrics :p) damn boy are u today's date cuz ur a 10/10</>,
   },
   {
     photo: `${assetPathPrefix}/d9c97.png`,
@@ -400,7 +400,7 @@ const cards: CardData[] = [
         You can bite my neck just a little too hard
         <br />
         <br />
-        -- hehe
+        (not in lyrics :p) hehe
       </>
     ),
   },
