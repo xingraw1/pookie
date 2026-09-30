@@ -12,17 +12,17 @@ function getCardUnlockDate(index: number): Date {
   return d
 }
 
-// function isCardUnlocked(index: number): boolean {
-//   const today = new Date()
-//   today.setHours(0, 0, 0, 0)
-//   const unlock = getCardUnlockDate(index)
-//   unlock.setHours(0, 0, 0, 0)
-//   return today >= unlock
-// }
-
 function isCardUnlocked(index: number): boolean {
-  return true // TEMP: remove after UI check
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const unlock = getCardUnlockDate(index)
+  unlock.setHours(0, 0, 0, 0)
+  return today >= unlock
 }
+
+// function isCardUnlocked(index: number): boolean {
+//   return true // TEMP: remove after UI check
+// }
 
 function CardFrontSvg({ month, day, locked, unlockDate, uid, className }: {
   month: number; day: number; locked: boolean; unlockDate: string; uid: string; className?: string
