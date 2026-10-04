@@ -973,7 +973,7 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           honestly, does she really like you if she doesn't vibe code a website for you?
         </p>
         <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          i can't believe we're six months old!!
+          i can't believe we're six months old!! well, this is a bit belated but issok.
         </p>
         <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           i know you aren't a lyrics guy, but i am (well, girl). a lot of songs have described feelings i could never put into words, and have said things i can't quite say myself.
@@ -986,6 +986,9 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
         </p>
         <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
           wow i feel like cheese. note: if you play the audios on a browser without adblocker... it might be chopped
+        </p>
+        <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
+          u da best pookie
         </p>
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
           -- last edited 9/29/26 at 10:43pm pacific time
