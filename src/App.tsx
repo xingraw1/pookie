@@ -985,7 +985,7 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           jia you fine shyt :)
         </p>
         <p className="text-[#3b3b3b] text-[26px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={{ fontFamily: "'Angela', cursive" }}>
-          wow i feel like cheese
+          wow i feel like cheese. note: if you play the audios on a browser without adblocker... it might be chopped
         </p>
         {/* <p className="text-[#3b3b3b] text-[22px] tablet:text-[26px] leading-[27px] tablet:leading-[31px]" style={poppinsItalic}>
           -- last edited 9/29/26 at 10:43pm pacific time
